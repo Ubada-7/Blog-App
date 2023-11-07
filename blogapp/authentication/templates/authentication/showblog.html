@@ -1,0 +1,439 @@
+{% comment %} <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+        }
+
+        .blog-post {
+            margin-bottom: 20px;
+        }
+
+        .blog-post h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .blog-post p {
+            margin-bottom: 15px;
+        }
+
+        .blog-post img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .actions button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .comments {
+            margin-top: 20px;
+        }
+
+        .comment {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .username {
+            font-weight: bold;
+        }
+
+        .comment-text {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Blog Post</h1>
+    </header>
+    <main class="container">
+        {% for post in blog_posts %}
+            <article class="blog-post">
+                <h2>{{ post.title }}</h2>
+                <p>Written by: {{ post.user }}</p>
+                <img src="{{ post.image.url }}" alt="{{ post.title }} Image">
+                <p>{{ post.content }}</p>
+                <div class="actions">
+                    <button class="like-button" data-post-id="{{ post.id }}">Like</button>
+                    <button class="show-comments-button" data-comments-id="{{ post.id }}">Comments</button>
+                    <form method="post" action="{% url 'report_post' post.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Report</button>
+                    </form>
+                </div>
+            </article>
+            <section class="comments" id="comments-{{ post.id }}" style="display: none;">
+                <h3>Comments</h3>
+                {% for comment in post.comments.all %}
+                    <div class="comment">
+                        <p class="username">{{ comment.user.username }}:</p>
+                        <p class="comment-text">{{ comment.text }}</p>
+                        <form method="post" action="{% url 'like_comment' comment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="like-comment-button">Like</button>
+                        </form>
+                        <button class="reply-button" data-comment-id="{{ comment.id }}">Reply</button>
+                        <p class="comment-likes">Likes: <span class="like-count">{{ comment.liked_by.count }}</span></p>
+                        <div class="replies-section" id="replies-{{ comment.id }}">
+                            <h4>Replies:</h4>
+                            {% for reply in comment.replies.all %}
+                                <div class="reply">
+                                    <p class="username">{{ reply.user.username }}:</p>
+                                    <p class="reply-text">{{ reply.text }}</p>
+                                    <p class="reply-likes">Likes: {{ reply.liked_by.count }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="reply-form" id="reply-form-{{ comment.id }}" style="display: none;">
+                            <form method="post" action="{% url 'add_reply' comment.id %}">
+                                {% csrf_token %}
+                                <textarea name="reply_text" placeholder="Your reply"></textarea>
+                                <button type="submit">Submit Reply</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </section>
+            <form method="post" action="{% url 'add_comment' post.id %}">
+                {% csrf_token %}
+                <input type="text" name="text" placeholder="Add a Comment">
+            </form>
+        {% endfor %}
+    </main>
+</body>
+
+</body>
+</html> {% endcomment %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f2f2f2;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border: 1px solid #ddd;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+        }
+
+        .blog-post {
+            margin-bottom: 20px;
+        }
+
+        .blog-post h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .blog-post p {
+            margin-bottom: 15px;
+        }
+
+        .blog-post img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 15px;
+        }
+
+        .actions {
+            margin-top: 10px;
+        }
+
+        .actions button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .comments {
+            margin-top: 20px;
+            display: none; /* Add this line to hide the comments section */
+        }
+        
+
+        .comment {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+
+        .comment p {
+            margin: 5px 0;
+        }
+
+        .username {
+            font-weight: bold;
+        }
+
+        .actions {
+            margin-top: 10px;
+            display: flex; /* Add flex display */
+            align-items: center; /* Align items vertically in the center */
+        }
+        
+        .actions button {
+            margin-right: 10px;
+            padding: 5px 10px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .like-comment-button, .report-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .reply-button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .comment-likes {
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .replies-section {
+            margin-top: 10px;
+        }
+
+        .reply {
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-bottom: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .reply p {
+            margin: 5px 0;
+        }
+
+        .reply-likes {
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .reply-form {
+            margin-top: 10px;
+        }
+
+        .reply-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .reply-form button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>My Blog Post</h1>
+    </header>
+    <main class="container">
+        {% for post in blog_posts %}
+            <article class="blog-post">
+                <h2>{{ post.title }}</h2>
+                <p class="author">Written by: {{ post.user }}</p>
+                <img src="{{ post.image.url }}" alt="{{ post.title }} Image">
+                <p class="content">{{ post.content }}</p>
+                <div class="actions">
+                    <button class="like-button" data-post-id="{{ post.id }}">Like</button>
+                    <span class="like-count"></span>
+                    <button class="show-comments-button" data-comments-id="{{ post.id }}">Comments</button>
+                    <form class="report-form" method="post" action="{% url 'report_post' post.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="report-button">Report</button>
+                    </form>
+                </div>
+            </article>
+            <section class="comments" id="comments-{{ post.id }}">
+                <h3>Comments</h3>
+                {% for comment in post.comments.all %}
+                    <div class="comment">
+                        <p class="username">{{ comment.user.username }}:</p>
+                        <p class="comment-text">{{ comment.text }}</p>
+                        <form method="post" action="{% url 'like_comment' comment.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="like-comment-button">Like</button>
+                        </form>
+                        <button class="reply-button" data-comment-id="{{ comment.id }}">Reply</button>
+                        <p class="comment-likes">Likes: <span class="like-count">{{ comment.liked_by.count }}</span></p>
+                        <div class="replies-section" id="replies-{{ comment.id }}">
+                            <h4>Replies:</h4>
+                            {% for reply in comment.replies.all %}
+                                <div class="reply">
+                                    <p class="username">{{ reply.user.username }}:</p>
+                                    <p class="reply-text">{{ reply.text }}</p>
+                                    <p class="reply-likes">Likes: {{ reply.liked_by.count }}</p>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <div class="reply-form" id="reply-form-{{ comment.id }}">
+                            <form method="post" action="{% url 'add_reply' comment.id %}">
+                                {% csrf_token %}
+                                <textarea name="reply_text" placeholder="Your reply"></textarea>
+                                <button type="submit">Submit Reply</button>
+                            </form>
+                        </div>
+                    </div>
+                {% endfor %}
+            </section>
+            <form class="comment-form" method="post" action="{% url 'add_comment' post.id %}">
+                {% csrf_token %}
+                <input type="text" name="text" placeholder="Add a Comment">
+            </form>
+        {% endfor %}
+    </main>
+</body>
+
+</body>
+</html>
+<script>
+    const showCommentsButtons = document.querySelectorAll('.show-comments-button');
+    showCommentsButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const postId = button.getAttribute('data-comments-id');
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            commentsSection.style.display = commentsSection.style.display === 'none' ? 'block' : 'none';
+        });
+    });
+    const likeButtons = document.querySelectorAll('.like-button');
+    likeButtons.forEach(likeButton => {
+        likeButton.addEventListener('click', async () => {
+            const postId = likeButton.getAttribute('data-post-id');
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;    
+            try {
+                const response = await fetch(`/like_post/${postId}/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    // Update the like count on the button
+                    const likesCountElement = likeButton.nextElementSibling;
+                    likesCountElement.textContent = data.like_count;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        });
+    });
+    {% comment %} const likeButtons = document.querySelectorAll('.like-button');
+likeButtons.forEach(likeButton => {
+    likeButton.addEventListener('click', async () => {
+        const postId = likeButton.getAttribute('data-post-id');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;    
+        try {
+            const response = await fetch(`/like_post/${postId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+            });
+            if (response.ok) {
+                const data = await response.json();
+                const likeCountElement = likeButton.nextElementSibling.nextElementSibling;
+                likeCountElement.textContent = `Likes: ${data.like_count}`;
+                if (data.is_liked) {
+                    likeButton.textContent = 'Unlike';
+                } else {
+                    likeButton.textContent = 'Like';
+                }
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    });
+}); {% endcomment %}
+
+    const replyButtons = document.querySelectorAll('.reply-button');
+    replyButtons.forEach(replyButton => {
+        replyButton.addEventListener('click', () => {
+            const commentID = replyButton.getAttribute('data-comment-id');
+            const replyForm = document.getElementById(`reply-form-${commentID}`);
+            replyForm.style.display = replyForm.style.display === 'block' ? 'none' : 'block';
+        });
+    });
+
+</script>
+
+</html>

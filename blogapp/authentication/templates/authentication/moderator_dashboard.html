@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Dashboard</title>
+</head>
+<body>
+    <h1>Moderator Dashboard</h1>
+    {% if pending_blogs %}
+        <h2>Pending Blogs:</h2>
+        <ul>
+            {% for pending_blog in pending_blogs %}
+                <li>
+                    <h3>{{ pending_blog.post.title }}</h3>
+                    <p>{{ pending_blog.post.content }}</p>
+                    <form method="post" action="{% url 'approve_blog' pending_blog.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Approve</button>
+                    </form>
+                    <form method="post" action="{% url 'reject_blog' pending_blog.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Reject</button>
+                    </form>
+                    {% comment %} <form method="post" action="{% url 'report_blog' pending_blog.id %}">
+                        {% csrf_token %}
+                        <button type="submit">Report</button>
+                    </form> {% endcomment %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No pending blogs to review.</p>
+    {% endif %}
+    <h2>Reported Blogs</h2>
+    {% if reported_posts %}
+        <ul>
+            {% for reported_post in reported_posts %}
+                <li>
+                    {{ reported_post.post.title }} by {{ reported_post.post.user }}
+                    <!-- Display the report count -->
+                    Reports: {{ reported_post.reports }}
+                    <form method="post" action="{% url 'handle_reports' %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="post_id" value="{{ reported_post.post.id }}">
+                        <button type="submit" name="action" value="ignore">Ignore</button>
+                        <button type="submit" name="action" value="delete">Delete</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No reports yet.</p>
+    {% endif %}
+
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Login</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f2f2f2;
+      }
+      .container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: white;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        border-radius: 5px;
+      }
+      .container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      .form-group label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 5px;
+      }
+      .form-group input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .login-btn {
+        display: block;
+        width: 100%;
+        padding: 10px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+    </style>
+  </head>
+<body>
+  <div class="container">
+    <h2>User Login</h2>
+    {% if messages %}
+    <ul class="messages">
+          {% for message in messages %}
+          <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+          {% endfor %}
+    </ul>
+{% endif %}
+    <form action="" method="post">
+    {%csrf_token%}
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" name="username" {% if user_under_restriction %}disabled{% endif %}>
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" name="password" {% if user_under_restriction %}disabled{% endif %}>
+        <button class="login-btn" type="submit">Login</button>
+    </form>
+    <div id="restriction-message" {% if not user_under_restriction %}style="display: none;"{% endif %}>
+      You have entered wrong credentials. You are restricted from entering credentials for <span id="countdown">3:00</span>
+  </div>
+  <p>Don't have an account?<br> Register Yourself! <a href="Signup">Register User</a></p>
+  
+  
+  </div>
+  <script>
+    {% if user_under_restriction %}
+    var remainingTime = {{ remaining_time_in_seconds }}; // Remaining time in seconds
+    var countdownElement = document.getElementById('countdown');
+
+    function updateCountdown() {
+        var minutes = Math.floor(remainingTime / 60);
+        var seconds = remainingTime % 60;
+
+        countdownElement.textContent = (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+
+        if (remainingTime <= 0) {
+            document.getElementById('username').removeAttribute('disabled');
+            document.getElementById('password').removeAttribute('disabled');
+            document.getElementById('restriction-message').style.display = 'none';
+        } else {
+            remainingTime--;
+            setTimeout(updateCountdown, 1000);
+        }
+    }
+
+    updateCountdown();
+    {% endif %}
+</script>
+
+</body>
+</html>
